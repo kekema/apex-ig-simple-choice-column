@@ -3,4 +3,4 @@ Oracle APEX IG Column Item Plugin for fast multi-row editing of simple choices.
 
 Enables the user to quickly select between two choices on multiple rows of the Interactive Grid without need to first click on the cell to get the input item visible. The type of Choice Item can be a Radio Group, Checkbox or Switch. Radio buttons can also be displayed as Pill buttons. The behavior is similar to the native APEX Interactive Grid Checkbox. A difference though is, using the plugin, the Interactive Grid will automatically be put in Edit Mode in case it isn't yet. From this, change events will always be fired also, and any related Dynamic Action triggered.
 
-![image](https://github.com/user-attachments/assets/9d2a88b1-931a-432e-82af-8ded73a19e61)
+![image](https://github.com/kekema/apex-ig-simple-choice-column/blob/main/ig-simplechoicecolumn.jpg)
