@@ -26,8 +26,8 @@
         "plugin" : {
           "internalName" : "LIB4X.AXT.IG.SIMPLECHOICECOLUMN",
           "type" : "item",
-	  "demo" : "",
-	  "previewImage" : "https://github.com/kekema/apex-ig-simple-choice-column/blob/main/IG%20Simple%20Choice%20Column.jpg?raw=true"
+	  "demo" : "https://github.com/kekema/apex-ig-simple-choice-column/blob/main/ig-simplechoicecolumn.jpg",
+	  "previewImage" : "https://github.com/kekema/apex-ig-simple-choice-column/blob/main/ig-simplechoicecolumn.jpg?raw=true"
         }
       }
     }
