@@ -1,6 +1,6 @@
 {
     "name" : "IG Simple Choice Column",
-    "version" : "1.0.1",
+    "version" : "1.0.0",
     "description" : "IG Column Item Plugin for fast multi-row editing of simple choices",
     "keywords" : ["Interactive Grid"],
     "homepage" : "https://github.com/kekema/apex-ig-simple-choice-column",
@@ -26,6 +26,7 @@
         "plugin" : {
           "internalName" : "LIB4X.AXT.IG.SIMPLECHOICECOLUMN",
           "type" : "item",
+	  "demo" : "",
 	  "previewImage" : "https://github.com/kekema/apex-ig-simple-choice-column/blob/main/IG%20Simple%20Choice%20Column.jpg?raw=true"
         }
       }
