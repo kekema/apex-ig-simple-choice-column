@@ -20,6 +20,7 @@
       "url" : "https://github.com/kekema/apex-ig-simple-choice-column"
     },
     "oracle" : {
+	  "versions" : ["19.0.0.0", "21.0.0.0", "23.0.0.0"],		
       "apex" : {
         "versions" : ["24.1"],
         "plugin" : {
