@@ -1,534 +1,188 @@
-/**
- * @author Karel Ekema
- * @license MIT license
- * Copyright (c) 2024 Karel Ekema
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the 'Software'), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
+--------------------------------------------------------------------------------
+-- t_item_attr type definition
+--------------------------------------------------------------------------------
+type t_item_attr is record
+( 
+    c_name                  varchar2(30),
+    c_choice_type           varchar2(30), 
+    c_on_value              varchar2(30),
+    c_on_label              varchar2(30),
+    c_off_value             varchar2(30),
+    c_off_label             varchar2(30),    
+    c_value1                varchar2(30), 
+    c_label1                varchar2(30),
+    c_value2                varchar2(30),
+    c_label2                varchar2(30),
+    c_checked_value         varchar2(30),
+    c_unchecked_value       varchar2(30),
+    c_pill_button           varchar2(30),      
+    c_display_null_value    varchar2(30),
+    c_null_display_value    varchar2(30),
+    c_null_return_value     varchar2(30),
+    value0                  varchar2(30),
+    label0                  varchar2(30),    
+    value1                  varchar2(30),
+    label1                  varchar2(30),
+    value2                  varchar2(30),
+    label2                  varchar2(30)
+); 
 
-window.lib4x = window.lib4x || {};
-window.lib4x.axt = window.lib4x.axt || {};
-window.lib4x.axt.ig = window.lib4x.axt.ig || {};
+--------------------------------------------------------------------------------
+-- init_item_attr Procedure
+--------------------------------------------------------------------------------
+procedure init_item_attr(
+    p_item    in  apex_plugin.t_item,
+    item_attr out t_item_attr
+)
+is
+begin
+    item_attr.c_name                := apex_plugin.get_input_name_for_item;
+    item_attr.c_choice_type         := p_item.attribute_01;     
+    item_attr.c_on_value            := p_item.attribute_02;  
+    item_attr.c_on_label            := p_item.attribute_03;
+    item_attr.c_off_value           := p_item.attribute_04;
+    item_attr.c_off_label           := p_item.attribute_05;    
+    item_attr.c_value1              := p_item.attribute_06;  
+    item_attr.c_label1              := p_item.attribute_07;
+    item_attr.c_value2              := p_item.attribute_08;
+    item_attr.c_label2              := p_item.attribute_09;
+    item_attr.c_checked_value       := p_item.attribute_10;
+    item_attr.c_unchecked_value     := p_item.attribute_11;  
+    item_attr.c_pill_button         := p_item.attribute_12;   
+    item_attr.c_display_null_value  := p_item.attribute_13;
+    item_attr.c_null_display_value  := p_item.attribute_14;
+    item_attr.c_null_return_value   := p_item.attribute_15;
+    case item_attr.c_choice_type
+        when 'RADIO_GROUP' then
+            item_attr.value0 := item_attr.c_null_return_value;
+            item_attr.label0 := item_attr.c_null_display_value;        
+            item_attr.value1 := item_attr.c_value1;
+            item_attr.label1 := item_attr.c_label1;
+            item_attr.value2 := item_attr.c_value2;
+            item_attr.label2 := item_attr.c_label2;
+        when 'SWITCH_CB' then
+            item_attr.value0 := null;
+            item_attr.label0 := null;          
+            item_attr.value1 := item_attr.c_on_value;
+            item_attr.label1 := item_attr.c_on_label;
+            item_attr.value2 := item_attr.c_off_value;
+            item_attr.label2 := item_attr.c_off_label; 
+        when 'CHECKBOX' then
+            item_attr.value0 := null;
+            item_attr.label0 := null;            
+            item_attr.value1 := item_attr.c_checked_value;
+            item_attr.label1 := 'Checked';
+            item_attr.value2 := item_attr.c_unchecked_value;
+            item_attr.label2 := 'Unchecked'; 
+    end case;  
+end init_item_attr;
 
-/* SimpleChoiceColumn
- * Enables simple radio group, checkbox or switch, multi-row, in an Interactive Grid
- * as to fast select between 2 choices.
- * Approach can be compared to the native IG checkbox - with a difference when the user
- * starts clicking when the IG is not in edit mode yet: upon first click, the IG
- * is automatically set in edit mode. From this, also immediately the change events
- * will be fired, so any DA gets triggered.
-*/
-lib4x.axt.ig.simpleChoiceColumn = (function($, util) {
+--------------------------------------------------------------------------------
+-- Render Procedure
+-- Renders the hidden input element to maintain the item value
+-- Adds on-load js as to init the item client-side
+--------------------------------------------------------------------------------
+procedure render_ig_simple_choice (
+    p_item   in            apex_plugin.t_item,
+    p_plugin in            apex_plugin.t_plugin,
+    p_param  in            apex_plugin.t_item_render_param,
+    p_result in out nocopy apex_plugin.t_item_render_result
+)
+is
+    item_attr           t_item_attr; 
+    c_escaped_value     constant varchar2(30) := apex_escape.html_attribute(p_param.value);   
+begin
+    apex_plugin_util.debug_page_item(p_plugin => p_plugin, p_page_item => p_item);
+    init_item_attr(p_item, item_attr);
+    if p_param.is_readonly or p_param.is_printer_friendly then
+        null;
+        -- do nothing - APEX will create a hidden input element with id as p_item.name
+    else
+        -- render hidden input element which will hold the value
+        -- client side, using apex.item.create, the interface will be implemented and
+        -- the specific choice item html will be rendered for user interaction
+        sys.htp.prn(
+            apex_string.format(
+                '<input type="hidden" %s id="%s" value="%s"/>'
+                , apex_plugin_util.get_element_attributes(p_item, item_attr.c_name)
+                , p_item.name
+                , case when p_param.value is null then '' else ltrim( rtrim ( c_escaped_value ) ) end
+            )
+        );
+    end if;     
 
-    // Init the item - will be called on page load
-    // The value will be kept on the server-side generated hidden input element.
-    // In the init here, the specific item interface is set up by applying apex.item.create.
-    // Client-side, the html for the specific type of choice item is generated.
-    let init = function(itemId, options)
-    {
-        // set up context variables including simple arrays on labels/values.
-        let choiceType = options.choiceType;
-        let displayNullValue = false;    
-        let value0;
-        let label0;             
-        if ((choiceType == 'RADIO_GROUP') && options.displayNullValue)
-        {
-            displayNullValue = options.displayNullValue; 
-            value0 = options.value0;
-            label0 = options.label0;  
-        } 
-        let value1 = options.value1;
-        let label1 = options.label1;   
-        if (choiceType == 'CHECKBOX')
-        {
-            label1 = apex.lang.getMessage( "APEX.ITEM_TYPE.CHECKBOX.CHECKED");
-        }     
-        let value2 = options.value2;
-        let label2 = options.label2;
-        if (choiceType == 'CHECKBOX')
-        {
-            label2 = apex.lang.getMessage( "APEX.ITEM_TYPE.CHECKBOX.UNCHECKED");
-        }          
-        let choiceLabel;
-        let choiceValue;
-        if ((choiceType == 'RADIO_GROUP') && options.displayNullValue)
-        {
-            choiceLabel = [label0, label1, label2];
-            choiceValue = [value0, value1, value2];            
-        }   
-        else
-        {
-            choiceLabel = [label1, label2];
-            choiceValue = [value1, value2];
-        }     
-        let index = 0;
-        let itemIsDisabled = false;
-        let itemIsReadOnly = options.readOnly; 
-        let itemIsRequired = options.isRequired;
-        let displayAsPillButton = options.displayAsPillButton;
+    -- When specifying the library declaratively, it fails to load the minified version. So using the API:
+    apex_javascript.add_library(
+          p_name      => 'ig-simplechoicecolumn',
+          p_check_to_add_minified => true,
+          p_directory => p_plugin.file_prefix || 'js/',
+          p_version   => NULL
+    );                
 
-        // wrap the server-side generated input element
-        // lateron, we add the specific html for the choice item type to this div, next to the hidden 
-        // input element
-        const item$ = $(`#${itemId}`);
-        let wrapClasses = 'apex-item-single-checkbox' + (displayAsPillButton ? ' t-Form-fieldContainer--radioButtonGroup' : '');
-        const iw$ = item$.wrap('<div class="' + wrapClasses + '"></div>').parent();
+    -- page on load: init simpleChoiceColumn
+    apex_javascript.add_onload_code(
+        p_code => apex_string.format(
+            'lib4x.axt.ig.simpleChoiceColumn.init("%s", {readOnly: %s, isRequired: %s, choiceType: "%s", displayNullValue: %s, displayAsPillButton: %s, value0: "%s", label0: "%s", value1: "%s", label1: "%s", value2: "%s", label2: "%s"});'
+            , p_item.name
+            , case when p_param.is_readonly then 'true' else 'false' end
+            , case when p_item.is_required then 'true' else 'false' end            
+            , item_attr.c_choice_type
+            , case when item_attr.c_display_null_value = 'Y' then 'true' else 'false' end            
+            , case when item_attr.c_pill_button = 'Y' then 'true' else 'false' end
+            , item_attr.value0            
+            , item_attr.label0            
+            , item_attr.value1            
+            , item_attr.label1
+            , item_attr.value2              
+            , item_attr.label2        
+        )
+    );
 
-        // render the specific choice item
-        // this can be as part of the above div next to the hidden input element
-        // or the rendering is from displayValueFor in the item interface
-        // as to render for each and every row
-        const render = (value, renderDisabled, labelBy) => {
-            let result = null;
-            if (choiceType == 'RADIO_GROUP')
-            {
-                result = renderRadioGroup(value, renderDisabled, labelBy);
-            }
-            else if (choiceType == 'SWITCH_CB')
-            {
-                result = renderSwitch(value, renderDisabled, labelBy);
-            }
-            else if (choiceType == 'CHECKBOX')
-            {
-                result = renderCheckbox(value, renderDisabled, labelBy);
-            }            
-            return result;
-        }
+    p_result.is_navigable := true;
+end render_ig_simple_choice;
 
-        const renderRadioGroup = (value, renderDisabled, labelBy) => {
-            const out = util.htmlBuilder();
-            if (displayAsPillButton)
-            {
-                out.markup('<div')
-                    .attr('class', 't-Form-fieldContainer--radioButtonGroup')
-                    .markup('/>')
-            }
-            out.markup('<div')
-                .attr('id', `${itemId}_${index}`)
-                .attr('class','apex-item-single-checkbox radio_group apex-item-group apex-item-group--rc apex-item-radio js-ignoreChange')
-                .attr('role','radiogroup')
-                .markup('><div')
-                .attr('role', 'none')
-                .attr('class', 'apex-item-grid radio_group')     
-                .markup('><div')
-                .attr('role', 'none')
-                .attr('class', 'apex-item-grid-row ')           
-                .markup('>');
-            for (let optionSeq = 0; optionSeq < choiceLabel.length; optionSeq++) {
-                out.markup('<div')
-                    .attr('class','apex-item-option')
-                    .markup('><input')
-                    .optionalAttr('disabled', renderDisabled)
-                    .attr('type','radio')
-                    .attr('id', `${itemId}_${index}_${optionSeq}`)
-                    .attr('name', `${itemId}_${index}_RG`)
-                    .attr('data-display', `${choiceLabel[optionSeq]}`)
-                    .attr('value', `${choiceValue[optionSeq]}`)
-                    .attr('aria-label', `${choiceLabel[optionSeq]}`)
-                    .optionalAttr('checked', value===choiceValue[optionSeq])
-                    .markup('><label')
-                    .attr('class', 'u-radio')
-                    .attr('for', `${itemId}_${index}_${optionSeq}`)
-                    .attr('aria-hidden', true)
-                    .markup('>')
-                    .content(choiceLabel[optionSeq])
-                    .markup('</label></div>')
-            }
-            out.markup('</div>')
-                .markup('</div>')
-                .markup('</div>');
-            if (displayAsPillButton)
-            {                
-                out.markup('</div>');
-            }
+--------------------------------------------------------------------------------
+-- Meta Data Procedure
+-- Returns a LOV as will be used in Filter and in Export Report
+--------------------------------------------------------------------------------
+procedure metadata_ig_simple_choice (
+    p_item   in            apex_plugin.t_item,
+    p_plugin in            apex_plugin.t_plugin,
+    p_param  in            apex_plugin.t_item_meta_data_param,
+    p_result in out nocopy apex_plugin.t_item_meta_data_result )
+is
+    item_attr   t_item_attr;     
+begin
+    init_item_attr(p_item, item_attr);
+    -- define query getting return/display values
+    -- as used by APEX in places like column filter and export report to pdf/excel/etc
+    -- no need to include null value (it would be filtered out by APEX anyway in the end query)
+    -- instead, the user can use 'is empty' filter
+    p_result.display_lov_definition := q'!select '!' || item_attr.label1 || q'!' as d, '!' || item_attr.value1 || q'!' as r !' ||
+                                       q'!from dual !' ||
+                                       q'!union all !' ||
+                                       q'!select '!' || item_attr.label2 || q'!' as d, '!' || item_attr.value2 || q'!' as r !' ||
+                                       q'!from dual!';
+    p_result.return_display_value := false;  -- return 'return' value only for regular item display                                  
+    p_result.escape_output := false;
+end metadata_ig_simple_choice;
 
-            index += 1;
-            return out.toString();
-        };
-
-        const renderSwitch = (value, renderDisabled, labelBy) => {
-            const out = util.htmlBuilder();     
-            out.markup('<span')
-                .attr('class', 'a-Switch')   
-                .markup('><input')
-                .optionalBoolAttr('disabled', renderDisabled)                
-                .attr('type', 'checkbox')
-                .attr('role', 'switch')
-                .attr('id', `${itemId}_${index}_0`)
-                .attr('name', `${itemId}_${index}_SW`)   
-                .attr('class', 'js-ignoreChange js-tabbable')
-                .attr('value', choiceValue[0])            
-                .attr('data-on-label', choiceLabel[0])
-                .attr('data-off-value', choiceValue[1])
-                .attr('data-off-label', choiceLabel[1])
-                .optionalBoolAttr('checked', value===choiceValue[0])
-                .optionalAttr('aria-labelledby', labelBy ? util.escapeHTMLAttr(labelBy) : '')
-                .markup('><span')
-                .attr('class', 'a-Switch-toggle')
-                .markup('></span></span>');
-
-            index += 1;    
-            return out.toString();
-        }   
-
-        const renderCheckbox = (value, renderDisabled, labelBy) => {
-            const out = util.htmlBuilder();     
-            out.markup('<div')
-                .attr('class', 'apex-item-single-checkbox')
-                .markup('><input')
-                .optionalBoolAttr('disabled', renderDisabled)                
-                .attr('type', 'checkbox')
-                .attr('id', `${itemId}_${index}_0`)
-                .attr('name', `${itemId}_${index}_CB`)   
-                .attr('class', 'js-ignoreChange js-tabbable')
-                .attr('value', choiceValue[0])            
-                .optionalBoolAttr('checked', value===choiceValue[0])
-                .optionalAttr('aria-labelledby', labelBy ? util.escapeHTMLAttr(labelBy) : '')
-                .markup('><span')
-                .attr('class', 'u-checkbox')
-                .attr('aria-hidden', true)
-                .markup('></span><span')
-                .attr('class', 'u-vh')
-                .attr('aria-hidden', true)
-                .markup('>')
-                .content(getValueLabel(value))
-                .markup('</span></div>');
-
-            index += 1;    
-            return out.toString();
-        }          
-
-        const getValueLabel = (itemValue) => {
-            let label = choiceLabel[choiceValue.indexOf(itemValue)];
-            return label ? label : '';
-        }
-
-        // updateDisplay processes any value change on the hidden input item
-        // into the specific choice item 
-        const updateDisplay = () => {
-            if (choiceType == 'RADIO_GROUP')
-            {
-                updateRadioGroupDisplay();
-            }
-            else if (choiceType == 'SWITCH_CB')
-            {
-                updateSwitchDisplay();
-            }
-            else if (choiceType == 'CHECKBOX')
-            {
-                updateCheckboxDisplay();
-            }            
-        }
-
-        const updateRadioGroupDisplay = () => {
-            let radioButton$ = null;
-            let itemValue = item$.val();
-            if (itemValue || displayNullValue)
-            {
-                radioButton$ = iw$.find('input[type="radio"][value="'+itemValue+'"]');
-                if (radioButton$.length)
-                {
-                    radioButton$[0].checked = true;
-                }
-            }
-            else
-            {
-                iw$.find('input[type="radio"]').each(function(index){
-                    this.checked = false;
-                });
-            }
-        };
-
-        const updateSwitchDisplay = () => {
-            let itemValue = item$.val();
-            let switch$ = iw$.find('input[type="checkbox"][role="switch"]');
-            if (switch$.length)
-            {
-                switch$[0].checked = (itemValue == choiceValue[0]);
-            }
-        };     
-
-        const updateCheckboxDisplay = () => {
-            let itemValue = item$.val();
-            let cbInput$ = iw$.find('input[type="checkbox"]');
-            if (cbInput$.length)
-            {
-                cbInput$[0].checked = (itemValue == choiceValue[0]);
-            }
-        };            
-
-        const getGridView = () => {
-            return item$.closest('.a-IG').interactiveGrid('getViews').grid;
-        }
-
-        const invertCheckbox = (cbInput$) => {
-            cbInput$.prop('checked', !cbInput$.prop('checked')).trigger('change'); 
-            cbInput$[0].indeterminate = false;            
-        }    
-
-        // put IG in edit mode
-        // and fire change event for the item
-        const switchToEditMode = () => {
-            // to be sure, check if not in edit mode
-            if (!(getGridView().view$.grid('inEditMode')))
-            {
-                setTimeout(()=>{
-                    item$.closest('.a-IG').interactiveGrid('getActions').set('edit', true); 
-                    apex.event.trigger('#'+itemId, 'change', null); 
-                }, 10);
-            }            
-        }    
-
-        if (!itemIsReadOnly)
-        {
-            // extend the div wrapped hidden item with the choice item specific html
-            iw$.append(render(null, false, null));        // as per index 0
-        }
-
-        if (choiceType == "RADIO_GROUP")
-        {
-            // upon checking a radio button, update the item value as kept on the hidden input element
-            iw$.find('input[type="radio"]').on('change', (e) => {
-                const radioButton$ = $(e.currentTarget);
-                if (radioButton$[0].checked)
-                {
-                    item$.val(radioButton$.val()).change();
-                }
-            });
-        }
-        else if (choiceType == "SWITCH_CB")
-        {
-            let cbInput$ = iw$.find('input[type="checkbox"][role="switch"]')
-            cbInput$.closest( "span.a-Switch" ).on( "click", function( e ) 
-            {
-                // The switch is basically a checkbox. When clicking on the switch, the click might be
-                // on the (invisible) checkbox, or outside of it on the switch css graph. If the click is 
-                // on the checkbox, the 'checked' flag is automatically set. If clicked outsite, then
-                // we need the set this flag ourselves.
-                // The situation here is the IG cell is activated and the switch has been clicked. So the 
-                // item.onInteraction(event.type = activate) won't be called.
-                // Taken from widget.yesNo.js
-                if (!$(e.target).is(':checkbox') && !cbInput$.is(':disabled'))
-                {
-                    invertCheckbox(cbInput$);
-                }
-            });
-            // upon a switch change, update the item value as kept on the hidden input element
-            cbInput$.on('change', (e) => {
-                const switch$ = $(e.currentTarget);
-                item$.val(switch$[0].checked ? choiceValue[0] : choiceValue[1]).change();
-            });            
-        }
-        else if (choiceType == "CHECKBOX")
-        {
-            let cbInput$ = iw$.find('input[type="checkbox"]')
-            // upon check/uncheck, update the item value as kept on the hidden input element
-            cbInput$.on('change', (e) => {
-                const cb$ = $(e.currentTarget);
-                item$.val(cb$[0].checked ? choiceValue[0] : choiceValue[1]).change();
-            });            
-        }        
-
-        // set the specific choice item checked attribute as per the hidden item value
-        updateDisplay();
-
-        // implement the item interface specifics
-        apex.item.create(itemId, {
-            item_type: "IG_SIMPLE_CHOICE",   
-            getValue(){
-                return this.node.value;
-            },
-            setValue(value){
-                item$.val(value);
-                updateDisplay();
-            },
-            disable(){
-                if (choiceType == 'RADIO_GROUP')
-                {
-                    $(':radio', iw$).prop('disabled', true).addClass('apex_disabled_multi');
-                }
-                else if ((choiceType == 'SWITCH_CB') || (choiceType == 'CHECKBOX'))
-                {
-                    $(':checkbox', iw$).prop('disabled', true);
-                }
-                itemIsDisabled = true;
-            },
-            enable(){
-                if (choiceType == 'RADIO_GROUP')
-                {                
-                    $(':radio', iw$).prop('disabled', false).removeClass('apex_disabled_multi');
-                }
-                else if ((choiceType == 'SWITCH_CB') || (choiceType == 'CHECKBOX'))
-                { 
-                    $(':checkbox', iw$).prop('disabled', false);
-                }                                   
-                itemIsDisabled = false;
-            },
-            isDisabled(){
-                return itemIsDisabled;
-            },
-            setFocusTo() {
-                // set focus to first input or currently selected radio if exists in the fieldset
-                // has to be a function to get currently checked value
-                let lReturn$ = $( ":checked", iw$ );
-                if (lReturn$.length === 0 ) {
-                    lReturn$ = $( choiceType == 'RADIO_GROUP' ? ":radio" : ":checkbox", iw$ );
-                }
-                return lReturn$.first();
-            },            
-            displayValueFor(value, state) {
-                // return the choice item specific html
-                // for single row view, just return the label
-                let singleRowMode = getGridView().singleRowMode;
-                let renderDisabled = state?.readonly || state?.disabled;
-                return singleRowMode ? getValueLabel(value) : render(value, renderDisabled, state?.labelBy);
-            },
-            getValidity: function () {
-                const requiredAttr = item$.prop( "required" );
-                if ( requiredAttr !== undefined && requiredAttr !== false ) {
-                    if ( this.isEmpty() ) {
-                        return { valid: false, valueMissing: true };
-                    }
-                }
-                return { valid: true };
-            },  
-            getInteractionSelector() {
-                // specify the selector as to which part in the DOM 
-                // clicks will be forwarded by APEX to the onInteraction method
-                let result = null;
-                if (choiceType == 'RADIO_GROUP')
-                {
-                    result = ".u-radio,.apex-item-option";
-                }
-                else if (choiceType == 'SWITCH_CB')
-                {
-                    result = ".a-Switch";
-                }
-                else if (choiceType == 'CHECKBOX')
-                {
-                    result = ".u-checkbox,.apex-item-single-checkbox";
-                }
-                return result;
-            },            
-            onInteraction(event, model, record, field){
-                // clicks gets forwarded on first click or on activating a cell
-                if (choiceType == 'RADIO_GROUP')
-                {
-                    if ((event.type == 'click') || (event.type == 'activate'))
-                    {
-                        // if clicking on the label, we need to switch the radio button ourselves
-                        let radioButton$ = null;
-                        if ($(event.target).is('.u-radio') || $(event.target).is('.apex-item-option'))
-                        {
-                            if ($(event.target).is('.u-radio'))
-                            {
-                                radioButton$ = $(event.target.parentElement).find('input[type="radio"]');
-                            }
-                            else if ($(event.target).is('.apex-item-option'))
-                            {
-                                radioButton$ = $(event.target).find('input[type="radio"]');
-                            }
-                            if (!radioButton$[0].checked)
-                            {
-                                radioButton$.prop('checked', true).trigger('change'); 
-                            }
-                        }
-                        else
-                        {
-                            radioButton$ = $(event.target);
-                        }                        
-                        if (event.type == 'click')
-                        {
-                            // click event: so at this point, we are not in edit mode 
-                            // update the model and put IG in edit mode
-                            let oldValue = model.getValue(record, field);
-                            let newValue = radioButton$[0].value;
-                            if (newValue != oldValue)
-                            {
-                                model.setValue(record, field, newValue);
-                                // switch to edit mode and fire change event
-                                switchToEditMode();
-                            }
-                        }
-                        else if (event.type == 'activate')
-                        {
-                            if (!apex.item(itemId).isDisabled())
-                            {
-                                // activate event: at this point, we are in edit mode
-                                // set the value on the hidden input item
-                                let oldValue = item$.val();
-                                let newValue = radioButton$[0].value;
-                                if (newValue != oldValue)
-                                {
-                                    this.setValue(newValue);
-                                }
-                            }
-                        } 
-                    }
-                }
-                else if ((choiceType == 'SWITCH_CB') || (choiceType == 'CHECKBOX'))
-                {
-                    // find checkbox input element
-                    let cbInput$ = $(event.target.parentElement).find('input[type="checkbox"]' + (choiceType == 'SWITCH_CB' ? '[role="switch"]' : ''));
-                    if (event.type == 'click')
-                    {
-                        // this is when the IG is not in edit mode
-                        // if clicked on the switch outsite the (invisible) checkbox, set the 'checked' property ourselves
-                        if (!$(event.target).is(':checkbox') && !cbInput$.is(':disabled'))
-                        {
-                            invertCheckbox(cbInput$);
-                        }     
-                        let oldValue = model.getValue(record, field);
-                        let newValue = cbInput$.prop('checked') ? choiceValue[0] : choiceValue[1];
-                        if (newValue != oldValue)
-                        {
-                            model.setValue(record, field, newValue);
-                            // switch to edit mode and fire change event
-                            switchToEditMode();
-                        }                                           
-                    }
-                    else if (event.type == 'activate')
-                    {
-                        // this is when the cell is activated and there was interaction on the InteractionSelector part
-                        // the a-Switch on click is not getting triggered in this situation, so we need to 
-                        // change the switch here and invert the 'checked' property
-                        if (!apex.item(itemId).isDisabled())
-                        {                        
-                            if (!cbInput$.is(':disabled'))
-                            {
-                                invertCheckbox(cbInput$);
-                            }                         
-                            let oldValue = item$.val();
-                            let newValue = cbInput$.prop('checked') ? choiceValue[0] : choiceValue[1];
-                            if (newValue != oldValue)
-                            {
-                                // set the item value; APEX will adjust the model as we are in edit mode
-                                this.setValue(newValue);
-                            }
-                        }
-                    }                     
-                } 
-            }
-        });
-    }
-
-    return{
-        init: init
-    }
-})(apex.jQuery, apex.util);
+--------------------------------------------------------------------------------
+-- Validation Procedure
+-- Executed before user defined validations
+--------------------------------------------------------------------------------
+procedure validate_ig_simple_choice (
+    p_item   in            apex_plugin.t_item,
+    p_plugin in            apex_plugin.t_plugin,
+    p_param  in            apex_plugin.t_item_validation_param,
+    p_result in out nocopy apex_plugin.t_item_validation_result )
+is
+    item_attr   t_item_attr;     
+begin
+    init_item_attr(p_item, item_attr);
+    if (item_attr.c_choice_type = 'RADIO_GROUP') then
+        if (((p_param.value is not null)) and (not(p_param.value in (item_attr.c_null_return_value, item_attr.c_value1, item_attr.c_value2)))) then
+            p_result.message := 'Radio Group contains invalid value (' || p_param.value || ')';
+        end if;
+    end if;
+end validate_ig_simple_choice;
