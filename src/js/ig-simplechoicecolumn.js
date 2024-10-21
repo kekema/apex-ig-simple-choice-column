@@ -44,6 +44,15 @@ lib4x.axt.ig.simpleChoiceColumn = (function($, util) {
     {
         // set up context variables including simple arrays on labels/values.
         let choiceType = options.choiceType;
+        let displayNullValue = false;    
+        let value0;
+        let label0;             
+        if ((choiceType == 'RADIO_GROUP') && options.displayNullValue)
+        {
+            displayNullValue = options.displayNullValue; 
+            value0 = options.value0;
+            label0 = options.label0;  
+        } 
         let value1 = options.value1;
         let label1 = options.label1;   
         if (choiceType == 'CHECKBOX')
@@ -56,8 +65,18 @@ lib4x.axt.ig.simpleChoiceColumn = (function($, util) {
         {
             label2 = apex.lang.getMessage( "APEX.ITEM_TYPE.CHECKBOX.UNCHECKED");
         }          
-        let choiceLabel = [label1, label2];
-        let choiceValue = [value1, value2];
+        let choiceLabel;
+        let choiceValue;
+        if ((choiceType == 'RADIO_GROUP') && options.displayNullValue)
+        {
+            choiceLabel = [label0, label1, label2];
+            choiceValue = [value0, value1, value2];            
+        }   
+        else
+        {
+            choiceLabel = [label1, label2];
+            choiceValue = [value1, value2];
+        }     
         let index = 0;
         let itemIsDisabled = false;
         let itemIsReadOnly = options.readOnly; 
@@ -220,7 +239,7 @@ lib4x.axt.ig.simpleChoiceColumn = (function($, util) {
         const updateRadioGroupDisplay = () => {
             let radioButton$ = null;
             let itemValue = item$.val();
-            if (itemValue)
+            if (itemValue || displayNullValue)
             {
                 radioButton$ = iw$.find('input[type="radio"][value="'+itemValue+'"]');
                 if (radioButton$.length)
