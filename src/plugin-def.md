@@ -1,5 +1,10 @@
 <img width="791" height="288" alt="image" src="https://github.com/user-attachments/assets/7de43a16-4a68-41df-a74c-b99a89adebf5" />
+<br>LIB4X - IG Simple Choice Column<br>
+LIB4X.AXT.IG.SIMPLECHOICECOLUMN
 <img width="785" height="375" alt="image" src="https://github.com/user-attachments/assets/2a05237c-f152-4604-b76f-fe2643f5bce6" />
+<br>render_ig_simple_choice<br>
+metadata_ig_simple_choice<br>
+validate_ig_simple_choice<br>
 <img width="503" height="222" alt="image" src="https://github.com/user-attachments/assets/db1395a1-5d00-4940-abf4-d7351da98656" />
 <img width="1307" height="357" alt="image" src="https://github.com/user-attachments/assets/3a53f513-d480-4fc1-b9dc-e0f4c299f30d" />
 <img width="1680" height="791" alt="image" src="https://github.com/user-attachments/assets/a8e949c4-47b4-4cde-8547-6be612ac5134" />
